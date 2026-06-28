@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+.DS_Store
+Thumbs.db
+
+models/*.pkl
+data/processed/*
+!data/processed/.gitkeep
+
+assets/posters/*
+!assets/posters/.gitkeep
