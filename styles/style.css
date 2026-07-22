@@ -1,0 +1,199 @@
+/* ===========================================
+   CineMatch AI - Phase 6.1
+=========================================== */
+
+.stApp{
+    background:#0B0B0B;
+    color:white;
+}
+
+
+
+/* Buttons */
+
+.stButton>button{
+
+    background:#E50914;
+
+    color:white;
+
+    border-radius:15px;
+
+    font-weight:bold;
+
+    padding:14px 28px;
+
+    border:none;
+
+    transition:0.3s;
+
+}
+
+.stButton>button:hover{
+
+    background:#ff1d25;
+
+    transform:scale(1.05);
+
+}
+
+/* Cards */
+
+img{
+    border-radius:15px;
+    object-fit:cover;
+}
+
+.stMetric{
+
+    background:#151515;
+
+    padding:10px;
+
+    border-radius:15px;
+
+}
+
+/* Footer */
+
+.footer{
+
+    text-align:center;
+
+    color:gray;
+
+    margin-top:50px;
+
+}
+
+
+
+
+/* =======================================================
+   HERO SECTION
+======================================================= */
+
+.hero{
+
+    background: linear-gradient(
+        135deg,
+        #0f172a,
+        #1e293b,
+        #111827
+    );
+
+    padding:50px;
+
+    border-radius:25px;
+
+    text-align:center;
+
+    margin-bottom:40px;
+
+    box-shadow:0px 10px 40px rgba(0,0,0,.45);
+
+}
+
+.hero h1{
+
+    font-size:58px;
+
+    color:white;
+
+    margin-bottom:10px;
+
+    font-weight:800;
+
+}
+
+.hero h3{
+
+    color:#facc15;
+
+    font-size:30px;
+
+    margin-bottom:15px;
+
+}
+
+.hero p{
+
+    color:#d1d5db;
+
+    font-size:20px;
+
+}
+
+
+
+/* ==========================================
+   NAVBAR
+========================================== */
+
+.navbar{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    background:#111827;
+
+    padding:18px 35px;
+
+    border-radius:18px;
+
+    margin-bottom:30px;
+
+    box-sizing:border-box;
+}
+
+.logo{
+    font-size:30px;
+    font-weight:700;
+    color:white;
+}
+
+.menu{
+    display:flex;
+    gap:30px;
+}
+
+.menu span{
+    color:#dddddd;
+    font-size:17px;
+    font-weight:500;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.menu span:hover{
+    color:#ff4b4b;
+}
+
+
+.stImage img{
+
+    border-radius:18px;
+
+    transition:.35s;
+
+}
+
+.stImage img:hover{
+
+    transform:scale(1.04);
+
+}
+
+
+
+/* Big View Details button */
+
+div[data-testid="stButton"] > button {
+    min-height: 70px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 14px;
+}

@@ -1,0 +1,11 @@
+APP_NAME = "🎬 CineMatch AI"
+
+VERSION = "7.6"
+
+AUTHOR = "Shashank Sangam"
+
+DEFAULT_LANGUAGE = "en-US"
+
+POSTERS_PER_ROW = 5
+
+DEFAULT_TIMEOUT = 10
