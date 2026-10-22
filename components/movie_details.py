@@ -1,196 +1,187 @@
+
 import streamlit as st
+
+from components.movie_watch_providers import movie_watch_providers
 
 
 def movie_details(movie, cast=None):
-
     if cast is None:
         cast = []
 
-    # -----------------------------------------------------
-    # BACKDROP
-    # -----------------------------------------------------
+    # =====================================================
+    # BACKDROP AND TITLE
+    # =====================================================
 
     backdrop = movie.get("backdrop")
 
     if backdrop:
-
         st.image(
             backdrop,
-            use_container_width=True
+            width="stretch",
         )
-
-    # -----------------------------------------------------
-    # TITLE
-    # -----------------------------------------------------
 
     st.markdown(
         f"""
-        <h1 style="
-        margin-top:20px;
-        color:white;
-        ">
-        {movie['title']}
+        <h1 style="margin-top:20px;color:white;">
+            {movie.get('title', 'Unknown Movie')}
         </h1>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-    # -----------------------------------------------------
-    # TAGLINE
-    # -----------------------------------------------------
-
     if movie.get("tagline"):
+        st.markdown(f"### *{movie['tagline']}*")
 
-        st.markdown(
-            f"### *{movie['tagline']}*"
-        )
-
-    st.write("")
-
-    # -----------------------------------------------------
-    # MAIN INFO
-    # -----------------------------------------------------
+    # =====================================================
+    # BASIC INFORMATION
+    # =====================================================
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric(
-        "⭐ Rating",
-        movie.get("rating")
-    )
+    rating = movie.get("rating", 0)
+    runtime = movie.get("runtime")
+    release_date = movie.get("release_date", "")
+    language = movie.get("language", "")
 
+    c1.metric("⭐ Rating", rating if rating else "N/A")
     c2.metric(
         "⏱ Runtime",
-        f"{movie.get('runtime')} min"
+        f"{runtime} min" if runtime else "N/A",
     )
-
     c3.metric(
         "📅 Release",
-        movie.get("release_date")
+        release_date if release_date else "N/A",
     )
-
     c4.metric(
         "🌍 Language",
-        movie.get("language", "").upper()
+        language.upper() if language else "N/A",
     )
 
-    st.divider()
-
-    # -----------------------------------------------------
+    # =====================================================
     # GENRES
-    # -----------------------------------------------------
-
-    st.subheader("🎭 Genres")
+    # =====================================================
 
     genres = movie.get("genres", [])
 
     if genres:
+        st.divider()
+        st.subheader("🎭 Genres")
+        st.markdown(" ".join(f"`{genre}`" for genre in genres))
 
-        st.markdown(
-            " ".join(
-                [
-                    f"`{g}`"
-                    for g in genres
-                ]
-            )
-        )
-
-    st.divider()
-
-    # -----------------------------------------------------
+    # =====================================================
     # STORY
-    # -----------------------------------------------------
+    # =====================================================
 
+    st.divider()
     st.subheader("📖 Story")
+    st.write(
+        movie.get("overview")
+        or "No description available."
+    )
 
-    st.write(movie.get("overview"))
+    # =====================================================
+    # BUDGET AND REVENUE
+    # =====================================================
 
-    st.divider()
+    budget = movie.get("budget", 0)
+    revenue = movie.get("revenue", 0)
 
-    # -----------------------------------------------------
-    # BUDGET
-    # -----------------------------------------------------
+    if budget or revenue:
+        st.divider()
 
-    c1, c2 = st.columns(2)
+        c1, c2 = st.columns(2)
 
-    with c1:
-
-        st.metric(
+        c1.metric(
             "💰 Budget",
-            f"${movie.get('budget',0):,}"
+            f"${budget:,}" if budget else "N/A",
         )
 
-    with c2:
-
-        st.metric(
+        c2.metric(
             "💵 Revenue",
-            f"${movie.get('revenue',0):,}"
+            f"${revenue:,}" if revenue else "N/A",
         )
 
-    st.divider()
-
-    # -----------------------------------------------------
-    # PRODUCTION
-    # -----------------------------------------------------
+    # =====================================================
+    # PRODUCTION COMPANIES
+    # =====================================================
 
     companies = movie.get("companies", [])
 
     if companies:
-
+        st.divider()
         st.subheader("🏢 Production")
 
-        for company in companies:
+        st.write(" • ".join(companies))
 
-            st.write("•", company)
-
-    st.divider()
-
-    # -----------------------------------------------------
+    # =====================================================
     # CAST
-    # -----------------------------------------------------
+    # =====================================================
 
     if cast:
-
+        st.divider()
         st.subheader("🎭 Top Cast")
 
-        cols = st.columns(5)
+        cols = st.columns(min(5, len(cast)))
 
-        for col, actor in zip(cols, cast):
+        for index, actor in enumerate(cast):
+            with cols[index % len(cols)]:
+                photo = actor.get("photo")
 
-            with col:
-
-                if actor["photo"]:
-
+                if photo:
                     st.image(
-                        actor["photo"],
-                        use_container_width=True
+                        photo,
+                        width="stretch",
                     )
 
                 st.markdown(
-                    f"**{actor['name']}**"
+                    f"**{actor.get('name', 'Unknown')}**"
                 )
 
                 st.caption(
-                    actor["character"]
+                    actor.get("character", "Unknown")
                 )
 
-    st.divider()
+    # =====================================================
+    # TRAILER AND OFFICIAL WEBSITE
+    # =====================================================
 
-    # -----------------------------------------------------
-    # LINKS
-    # -----------------------------------------------------
+    homepage = movie.get("homepage")
+    trailer = movie.get("trailer")
 
-    if movie.get("homepage"):
+    if homepage or trailer:
+        st.divider()
+        st.subheader("🔗 More About This Movie")
 
-        st.link_button(
-            "🌐 Official Website",
-            movie["homepage"],
-            use_container_width=True
+        if homepage:
+            st.link_button(
+                "🌐 Official Website",
+                homepage,
+                width="stretch",
+            )
+
+        if trailer:
+            st.link_button(
+                "▶ Watch Trailer",
+                trailer,
+                width="stretch",
+            )
+
+    # =====================================================
+    # STREAMING AVAILABILITY — INDIA
+    # =====================================================
+
+    movie_id = movie.get("movie_id") or movie.get("id")
+
+    if movie_id:
+        movie_watch_providers(
+            movie_id=movie_id,
+            country_code=st.session_state.get(
+            "watch_country_code", "IN"
+        ),
+            movie_title=movie.get("title", ""),
         )
-
-    if movie.get("trailer"):
-
-        st.link_button(
-            "▶ Watch Trailer",
-            movie["trailer"],
-            use_container_width=True
+    else:
+        st.info(
+            "Streaming availability cannot be loaded "
+            "because this movie has no TMDB ID."
         )

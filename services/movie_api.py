@@ -9,183 +9,147 @@ from services.tmdb_service import (
 )
 
 
-
-
-
-
 # ==========================================================
-# SEARCH MOVIE
+# SEARCH MOVIES
 # ==========================================================
 
-
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=900,
+    show_spinner=False
+)
 def search_movie(query):
 
-    url = f"{BASE_URL}/search/movie"
+    query = query.strip()
 
-    params = {
+    if not query:
+        return []
 
-        "api_key": API_KEY,
+    data = tmdb_request(
+        "/search/movie",
+        {
+            "query": query
+        }
+    )
 
-        "language": "en-US",
+    if not data:
+        return []
 
-        "query": query
+    return data.get(
+        "results",
+        []
+    )
 
-    }
-
-    try:
-
-        response = session.get(
-            url,
-            params=params,
-            timeout=10
-        )
-
-        response.raise_for_status()
-
-        return response.json().get("results", [])
-
-    except Exception as e:
-
-        st.error(e)
-
-        return {}
-    
 
 # ==========================================================
 # TRENDING
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_trending():
 
-    data = tmdb_request("/trending/movie/week")
+    data = tmdb_request(
+        "/trending/movie/week"
+    )
 
     if not data:
-
         return []
 
-    return data.get("results", [])
+    return data.get(
+        "results",
+        []
+    )
+
+
+# ==========================================================
+# TRENDING PAGE
+# ==========================================================
+
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
+def get_trending_page(page=1):
+
+    data = tmdb_request(
+        "/trending/movie/week",
+        {
+            "page": page
+        }
+    )
+
+    if not data:
+        return {}
+
+    return data
 
 
 # ==========================================================
 # NOW PLAYING
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_now_playing():
 
-    data = tmdb_request("/movie/now_playing")
+    data = tmdb_request(
+        "/movie/now_playing"
+    )
 
     if not data:
-
         return []
 
-    return data.get("results", [])
-
-
-
-@st.cache_data(show_spinner=False)
-def get_trending_page(page=1):
-
-    url = f"{BASE_URL}/trending/movie/week"
-
-    params = {
-
-        "api_key": API_KEY,
-
-        "language": "en-US",
-
-        "page": page
-
-    }
-
-    try:
-
-        response = session.get(
-            url,
-            params=params,
-            timeout=10
-        )
-
-        response.raise_for_status()
-
-        return response.json()
-
-    except Exception as e:
-
-        st.error(e)
-
-        return {}
-    
-
+    return data.get(
+        "results",
+        []
+    )
 
 
 # ==========================================================
-# GET_TOP_RATED MOVIES
+# TOP RATED
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_top_rated(page=1):
 
-    url = f"{BASE_URL}/movie/top_rated"
+    data = tmdb_request(
+        "/movie/top_rated",
+        {
+            "page": page
+        }
+    )
 
-    params = {
-        "api_key": API_KEY,
-        "language": "en-US",
-        "page": page
-    }
-
-    try:
-
-        response = session.get(
-            url,
-            params=params,
-            timeout=10
-        )
-
-        response.raise_for_status()
-
-        return response.json()
-
-    except Exception as e:
-
-        st.error(e)
-
+    if not data:
         return {}
-    
 
+    return data
 
 
 # ==========================================================
-# UPCOMING MOVIES
+# UPCOMING
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=900,
+    show_spinner=False
+)
 def get_upcoming(page=1):
 
-    url = f"{BASE_URL}/movie/upcoming"
+    data = tmdb_request(
+        "/movie/upcoming",
+        {
+            "page": page
+        }
+    )
 
-    params = {
-        "api_key": API_KEY,
-        "language": "en-US",
-        "page": page
-    }
-
-    try:
-
-        response = session.get(
-            url,
-            params=params,
-            timeout=10
-        )
-
-        response.raise_for_status()
-
-        return response.json()
-
-    except Exception as e:
-
-        st.error(e)
-
+    if not data:
         return {}
+
+    return data

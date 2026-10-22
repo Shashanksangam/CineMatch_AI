@@ -2,74 +2,161 @@ import streamlit as st
 
 from services.movie_api import get_top_rated
 
-
 from components.movie_card import movie_card
 from components.movie_details import movie_details
 
-from utils.movie_builder import build_movie
+from utils.lightweight_builder import build_light_movie
+
+from utils.session_state import initialize_movie_detail_state
+
 
 def top_rated_page():
 
+    # ======================================================
+    # INITIALIZE DETAILS STATE
+    # ======================================================
+
+    initialize_movie_detail_state()
+
+    # ======================================================
+    # PAGE IDENTIFICATION
+    # ======================================================
+
+    current_page = "Top Rated"
+
+    if st.session_state.get("active_content_page") != current_page:
+
+        st.session_state.selected_movie_details = None
+        st.session_state.selected_cast = []
+        st.session_state.details_page = None
+
+        st.session_state.active_content_page = current_page
+
+    # ======================================================
+    # TITLE
+    # ======================================================
+
     st.title("⭐ Top Rated Movies")
+
+    # ======================================================
+    # PAGE STATE
+    # ======================================================
 
     if "top_page" not in st.session_state:
         st.session_state.top_page = 1
 
+    if "top_limit" not in st.session_state:
+        st.session_state.top_limit = 10
+
     page = st.session_state.top_page
+
+    # ======================================================
+    # FETCH DATA
+    # ======================================================
 
     data = get_top_rated(page)
 
-    
-
-    movies = data.get("results", [])[:20]
-
-    if not movies:
-
-        st.warning("Unable to fetch movies.")
-
+    if not data:
+        st.warning("Unable to fetch Top Rated movies.")
         return
 
-    num_cols = 5
-    cols = st.columns(num_cols)
+    results = data.get("results", [])
 
-    for i, movie in enumerate(movies):
+    if not results:
+        st.warning("No Top Rated movies found.")
+        return
 
-        details = build_movie(movie)
+    # ======================================================
+    # CURRENT MOVIES
+    # ======================================================
 
-        if details:
+    movies = results[:st.session_state.top_limit]
 
-            with cols[i % num_cols]:
+    # ======================================================
+    # MOVIE GRID
+    # ======================================================
 
-                movie_card(details)
+    for row in range(0, len(movies), 5):
 
-            if st.session_state.selected_movie_details:
+        cols = st.columns(5)
 
-                st.divider()
+        row_movies = movies[row:row + 5]
 
-                movie_details(
+        for col, movie in zip(cols, row_movies):
 
-                    st.session_state.selected_movie_details,
+            details = build_light_movie(movie)
 
-                    st.session_state.selected_cast
+            if details:
 
-                )
+                with col:
+
+                    movie_card(details)
+
+    # ======================================================
+    # MOVIE DETAILS
+    # IMPORTANT:
+    # This MUST remain OUTSIDE the movie loop.
+    # ======================================================
+
+    if (
+        st.session_state.get("selected_movie_details")
+        and st.session_state.get("details_page") == current_page
+    ):
+
+        st.divider()
+
+        movie_details(
+            st.session_state.selected_movie_details,
+            st.session_state.selected_cast
+        )
+
+    # ======================================================
+    # PAGINATION
+    # ======================================================
 
     st.divider()
 
-    c1, c2, c3 = st.columns([1,2,1])
+    c1, c2, c3 = st.columns([1, 2, 1])
 
     with c2:
 
-        if st.button(
+        # --------------------------------------------------
+        # LOAD MORE FROM CURRENT API PAGE
+        # --------------------------------------------------
 
-            "Load Next 20 Movies",
+        if st.session_state.top_limit < len(results):
 
-            key="top_next_page",
+            if st.button(
+                "⬇ Load More",
+                use_container_width=True,
+                key="top_load_more"
+            ):
 
-            use_container_width=True
+                st.session_state.top_limit = min(
+                    st.session_state.top_limit + 10,
+                    len(results)
+                )
 
-        ):
+                st.rerun()
 
-            st.session_state.top_page += 1
+        # --------------------------------------------------
+        # NEXT API PAGE
+        # --------------------------------------------------
 
-            st.rerun()
+        else:
+
+            if st.button(
+                "➡ Next Page",
+                use_container_width=True,
+                key="top_next_page"
+            ):
+
+                # Close currently opened details
+                st.session_state.selected_movie_details = None
+                st.session_state.selected_cast = []
+                st.session_state.details_page = None
+
+                st.session_state.top_page += 1
+                st.session_state.top_limit = 10
+
+                st.rerun()

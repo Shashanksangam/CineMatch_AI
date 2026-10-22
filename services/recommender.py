@@ -1,11 +1,11 @@
 import streamlit as st
 
-from services.tmdb_service import (
-    get_movie_details,
-    get_trailer,
-    get_cast
-)
+from services.tmdb_service import get_movie_details
 
+@st.cache_data(
+    show_spinner=False,
+    ttl=3600
+)
 
 def recommend(
 
@@ -54,10 +54,6 @@ def recommend(
             details["title"] = movies.iloc[index].title
 
             details["movie_id"] = movie_id
-
-            details["trailer"] = get_trailer(movie_id)
-
-            details["cast"] = get_cast(movie_id)
 
             recommendations.append(details)
 

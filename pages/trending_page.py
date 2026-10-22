@@ -2,70 +2,106 @@ import streamlit as st
 
 from services.movie_api import get_trending_page
 
-from services.tmdb_service import (
-    get_movie_details,
-    get_trailer,
-    get_cast
-)
-
 from components.movie_card import movie_card
-
 from components.movie_details import movie_details
 
-from utils.movie_builder import build_movie
+from utils.lightweight_builder import build_light_movie
+
+from utils.session_state import initialize_movie_detail_state
+
 
 def trending_page():
 
+    # ======================================================
+    # INITIALIZE DETAILS STATE
+    # ======================================================
+
+    initialize_movie_detail_state()
+
+    # ======================================================
+    # PAGE IDENTIFICATION
+    # ======================================================
+
+    current_page = "Trending"
+
+    if st.session_state.get("active_content_page") != current_page:
+
+        st.session_state.selected_movie_details = None
+        st.session_state.selected_cast = []
+        st.session_state.details_page = None
+
+        st.session_state.active_content_page = current_page
+
+    # ======================================================
+    # TITLE
+    # ======================================================
+
     st.title("🔥 Trending Movies")
 
-    # ----------------------------------------
-    # Session State
-    # ----------------------------------------
+    # ======================================================
+    # PAGE STATE
+    # ======================================================
 
     if "trend_page" not in st.session_state:
         st.session_state.trend_page = 1
 
+    if "trend_limit" not in st.session_state:
+        st.session_state.trend_limit = 10
+
     page = st.session_state.trend_page
 
-    # ----------------------------------------
-    # Fetch Movies
-    # ----------------------------------------
+    # ======================================================
+    # FETCH DATA
+    # ======================================================
 
     data = get_trending_page(page)
 
-    
-
-    movies = data.get("results", [])
-
-    if not movies:
-
-        st.warning("Unable to fetch movies.")
-
+    if not data:
+        st.warning("Unable to fetch Trending movies.")
         return
 
-    # ----------------------------------------
-    # Movie Grid
-    # ----------------------------------------
+    results = data.get("results", [])
 
-    cols = st.columns(5)
+    if not results:
+        st.warning("No Trending movies found.")
+        return
 
-    for i, movie in enumerate(movies):
+    # ======================================================
+    # CURRENT MOVIES
+    # ======================================================
 
-        details = build_movie(movie)
+    movies = results[:st.session_state.trend_limit]
 
-        if details:
+    # ======================================================
+    # MOVIE GRID
+    # ======================================================
 
-            with cols[i % 5]:
+    for row in range(0, len(movies), 5):
 
-                movie_card(details)
+        cols = st.columns(5)
 
-                
+        row_movies = movies[row:row + 5]
 
-    # ----------------------------------------
-    # Pagination
-    # ----------------------------------------
+        for col, movie in zip(cols, row_movies):
 
-    if st.session_state.selected_movie_details:
+            details = build_light_movie(movie)
+
+            if details:
+
+                with col:
+
+                    movie_card(details)
+
+    # ======================================================
+    # MOVIE DETAILS
+    # IMPORTANT:
+    # This is OUTSIDE the movie loop.
+    # ======================================================
+
+    if (
+        st.session_state.get("selected_movie_details")
+        and st.session_state.get("details_page") == current_page
+    ):
 
         st.divider()
 
@@ -73,20 +109,54 @@ def trending_page():
             st.session_state.selected_movie_details,
             st.session_state.selected_cast
         )
-    
-    
+
+    # ======================================================
+    # PAGINATION
+    # ======================================================
+
     st.divider()
 
     c1, c2, c3 = st.columns([1, 2, 1])
 
     with c2:
 
-        if st.button(
-            "Load Next 20 Movies",
-            key="trend_next_page",
-            use_container_width=True
-        ):
+        # --------------------------------------------------
+        # LOAD MORE
+        # --------------------------------------------------
 
-            st.session_state.trend_page += 1
+        if st.session_state.trend_limit < len(results):
 
-            st.rerun()
+            if st.button(
+                "⬇ Load More",
+                use_container_width=True,
+                key="trend_load_more"
+            ):
+
+                st.session_state.trend_limit = min(
+                    st.session_state.trend_limit + 10,
+                    len(results)
+                )
+
+                st.rerun()
+
+        # --------------------------------------------------
+        # NEXT PAGE
+        # --------------------------------------------------
+
+        else:
+
+            if st.button(
+                "➡ Next Page",
+                use_container_width=True,
+                key="trend_next_page"
+            ):
+
+                # Close currently opened details
+                st.session_state.selected_movie_details = None
+                st.session_state.selected_cast = []
+                st.session_state.details_page = None
+
+                st.session_state.trend_page += 1
+                st.session_state.trend_limit = 10
+
+                st.rerun()

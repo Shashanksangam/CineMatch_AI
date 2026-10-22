@@ -5,9 +5,13 @@ from services.favorites_service import get_favorites
 from components.movie_card import movie_card
 from components.movie_details import movie_details
 
+from utils.session_state import initialize_movie_detail_state
+
 
 def favorites_page():
 
+    initialize_movie_detail_state()
+    
     st.title("❤️ My Favorite Movies")
 
     favorites = get_favorites()
@@ -28,7 +32,10 @@ def favorites_page():
 
             movie_card(movie)
 
-    if st.session_state.selected_movie_details:
+    if (
+        st.session_state.selected_movie_details
+        and st.session_state.details_page == "Favorites"
+    ):
 
         st.divider()
 

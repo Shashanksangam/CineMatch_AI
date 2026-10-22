@@ -8,10 +8,14 @@ from components.movie_details import movie_details
 
 from components.hero import hero
 
+from utils.session_state import initialize_movie_detail_state
+
 hero()
 
 
 def home_page(movies, similarity):
+
+    initialize_movie_detail_state()
 
     # ======================================================
     # SEARCH MOVIE
@@ -135,14 +139,23 @@ def home_page(movies, similarity):
     # MOVIE DETAILS
     # ======================================================
 
-    if st.session_state.selected_movie_details:
+    if (
+        st.session_state.selected_movie_details
+        and st.session_state.details_page == "Home"
+    ):
 
-        st.divider()
+        st.markdown(
+            """
+            <hr style="
+                border:0.5px solid #252525;
+                margin-top:25px;
+                margin-bottom:25px;
+            ">
+            """,
+            unsafe_allow_html=True
+        )
 
         movie_details(
-
             st.session_state.selected_movie_details,
-
             st.session_state.selected_cast
-
         )

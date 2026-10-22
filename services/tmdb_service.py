@@ -1,6 +1,7 @@
 import requests
 import streamlit as st
 
+
 # ==========================================================
 # TMDB CONFIG
 # ==========================================================
@@ -11,32 +12,40 @@ BASE_URL = "https://api.themoviedb.org/3"
 
 IMAGE_URL = "https://image.tmdb.org/t/p/w500"
 
+BACKDROP_URL = "https://image.tmdb.org/t/p/original"
+
 PLACEHOLDER = (
-    "https://via.placeholder.com/500x750?text=No+Poster"
+    "https://placehold.co/500x750?text=No+Poster"
 )
 
 session = requests.Session()
 
 
 # ==========================================================
-# INTERNAL REQUEST FUNCTION
+# INTERNAL REQUEST
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
-def tmdb_request(endpoint: str):
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
+def tmdb_request(endpoint: str, params=None):
 
     url = f"{BASE_URL}{endpoint}"
 
-    params = {
+    request_params = {
         "api_key": API_KEY,
         "language": "en-US"
     }
+
+    if params:
+        request_params.update(params)
 
     try:
 
         response = session.get(
             url,
-            params=params,
+            params=request_params,
             timeout=10
         )
 
@@ -44,30 +53,145 @@ def tmdb_request(endpoint: str):
 
         return response.json()
 
-    except Exception as e:
+    except requests.RequestException:
 
-        st.error(e)
+        return None
+
+    except Exception:
 
         return None
 
 
 # ==========================================================
-# GET MOVIE DETAILS
+# MOVIE DETAILS
+#
+# ONE REQUEST:
+# details + videos + credits
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_movie_details(movie_id):
 
-    data = tmdb_request(f"/movie/{movie_id}")
+    data = tmdb_request(
+        f"/movie/{movie_id}",
+        {
+            "append_to_response": "videos,credits"
+        }
+    )
 
     if not data:
         return None
+
+    # ------------------------------------------------------
+    # GENRES
+    # ------------------------------------------------------
+
+    genres = [
+        genre.get("name", "")
+        for genre in data.get("genres", [])
+        if genre.get("name")
+    ]
+
+    # ------------------------------------------------------
+    # PRODUCTION COMPANIES
+    # ------------------------------------------------------
+
+    companies = [
+        company.get("name", "")
+        for company in data.get(
+            "production_companies",
+            []
+        )
+        if company.get("name")
+    ]
+
+    # ------------------------------------------------------
+    # TRAILER
+    # ------------------------------------------------------
+
+    trailer = None
+
+    videos = data.get(
+        "videos",
+        {}
+    ).get(
+        "results",
+        []
+    )
+
+    for video in videos:
+
+        if (
+            video.get("site") == "YouTube"
+            and video.get("type") == "Trailer"
+        ):
+
+            trailer = (
+                "https://www.youtube.com/watch?v="
+                + video.get("key", "")
+            )
+
+            break
+
+    # ------------------------------------------------------
+    # CAST
+    # ------------------------------------------------------
+
+    cast = []
+
+    tmdb_cast = data.get(
+        "credits",
+        {}
+    ).get(
+        "cast",
+        []
+    )
+
+    for actor in tmdb_cast[:5]:
+
+        profile_path = actor.get(
+            "profile_path"
+        )
+
+        photo = (
+            IMAGE_URL + profile_path
+            if profile_path
+            else None
+        )
+
+        cast.append(
+            {
+                "name": actor.get(
+                    "name",
+                    "Unknown"
+                ),
+
+                "character": actor.get(
+                    "character",
+                    "Unknown"
+                ),
+
+                "photo": photo
+            }
+        )
+
+    # ------------------------------------------------------
+    # RETURN STANDARD MOVIE OBJECT
+    # ------------------------------------------------------
 
     return {
 
         "id": movie_id,
 
-        "title": data.get("title", "Unknown"),
+        "movie_id": movie_id,
+
+        "title": data.get(
+            "title",
+            "Unknown"
+        ),
 
         "overview": data.get(
             "overview",
@@ -81,14 +205,16 @@ def get_movie_details(movie_id):
         ),
 
         "backdrop": (
-            "https://image.tmdb.org/t/p/original"
-            + data["backdrop_path"]
+            BACKDROP_URL + data["backdrop_path"]
             if data.get("backdrop_path")
             else None
         ),
 
         "rating": round(
-            data.get("vote_average", 0),
+            data.get(
+                "vote_average",
+                0
+            ),
             1
         ),
 
@@ -137,136 +263,172 @@ def get_movie_details(movie_id):
             ""
         ),
 
-        "genres": [
+        "genres": genres,
 
-            genre["name"]
+        "companies": companies,
 
-            for genre in data.get(
-                "genres",
-                []
-            )
+        "trailer": trailer,
 
-        ],
-
-        "companies": [
-
-            company["name"]
-
-            for company in data.get(
-                "production_companies",
-                []
-            )
-
-        ]
+        "cast": cast
 
     }
 
 
 # ==========================================================
-# POSTER ONLY
+# POSTER
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_poster(movie_id):
 
     details = get_movie_details(movie_id)
 
-    print(movie_id)
-    print(details)
+    if not details:
+        return PLACEHOLDER
 
-    return details.get("poster", PLACEHOLDER)
+    return details.get(
+        "poster",
+        PLACEHOLDER
+    )
 
 
 # ==========================================================
 # TRAILER
+#
+# IMPORTANT:
+# NO NEW API REQUEST
+#
+# Uses cached movie details.
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_trailer(movie_id):
 
-    data = tmdb_request(f"/movie/{movie_id}/videos")
+    details = get_movie_details(movie_id)
 
-    if not data:
-
+    if not details:
         return None
 
-    for video in data.get("results", []):
-
-        if (
-            video.get("site") == "YouTube"
-            and video.get("type") == "Trailer"
-        ):
-
-            return (
-                "https://www.youtube.com/watch?v="
-                + video["key"]
-            )
-
-    return None
+    return details.get(
+        "trailer"
+    )
 
 
 # ==========================================================
 # CAST
+#
+# IMPORTANT:
+# NO NEW API REQUEST
+#
+# Uses cached movie details.
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_cast(movie_id, limit=5):
 
-    data = tmdb_request(f"/movie/{movie_id}/credits")
+    details = get_movie_details(movie_id)
 
-    if not data:
-
+    if not details:
         return []
 
-    cast = []
-
-    for actor in data.get("cast", [])[:limit]:
-
-        cast.append(
-
-            {
-
-                "name": actor["name"],
-
-                "character": actor["character"],
-
-                "photo":
-
-                (
-                    IMAGE_URL + actor["profile_path"]
-
-                    if actor.get("profile_path")
-
-                    else None
-
-                )
-
-            }
-
-        )
-
-    return cast
+    return details.get(
+        "cast",
+        []
+    )[:limit]
 
 
 # ==========================================================
 # DIRECTOR
+#
+# Uses the credits already included in movie details.
 # ==========================================================
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def get_director(movie_id):
 
-    data = tmdb_request(f"/movie/{movie_id}/credits")
+    data = tmdb_request(
+        f"/movie/{movie_id}",
+        {
+            "append_to_response": "credits"
+        }
+    )
 
     if not data:
-
         return "Unknown"
 
-    for crew in data.get("crew", []):
+    crew = data.get(
+        "credits",
+        {}
+    ).get(
+        "crew",
+        []
+    )
 
-        if crew.get("job") == "Director":
+    for person in crew:
 
-            return crew.get("name")
+        if person.get("job") == "Director":
+
+            return person.get(
+                "name",
+                "Unknown"
+            )
 
     return "Unknown"
 
 
+@st.cache_data(ttl=1800, show_spinner=False)
+def get_watch_providers(movie_id, country_code="IN"):
+    """
+    Get streaming, free, rental and purchase options
+    for a movie in the requested country.
+    """
+    data = tmdb_request(
+        f"/movie/{movie_id}/watch/providers"
+    )
+
+    if not data:
+        return None
+
+    country_data = (
+        data.get("results", {}).get(country_code.upper())
+    )
+
+    if not country_data:
+        return {
+            "link": None,
+            "flatrate": [],
+            "free": [],
+            "ads": [],
+            "rent": [],
+            "buy": [],
+        }
+
+    categories = {}
+
+    for category in (
+        "flatrate",
+        "free",
+        "ads",
+        "rent",
+        "buy",
+    ):
+        categories[category] = country_data.get(
+            category, []
+        ) or []
+
+    return {
+        "link": country_data.get("link"),
+        **categories,
+    }

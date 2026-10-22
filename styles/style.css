@@ -197,3 +197,360 @@ div[data-testid="stButton"] > button {
     font-weight: 600;
     border-radius: 14px;
 }
+
+
+/* ===========================
+   Premium Movie Card
+=========================== */
+
+.movie-card{
+
+background:#171717;
+
+padding:18px;
+
+border-radius:22px;
+
+transition:all .35s ease;
+
+margin-bottom:30px;
+
+box-shadow:0 0 15px rgba(0,0,0,.35);
+
+height:100%;
+
+}
+
+.movie-card:hover{
+
+transform:translateY(-12px);
+
+box-shadow:0 18px 40px rgba(229,9,20,.45);
+
+}
+
+/* ===========================
+   Poster Animation
+=========================== */
+
+.movie-card img{
+
+border-radius:18px;
+
+transition:.4s;
+
+}
+
+.movie-card:hover img{
+
+transform:scale(1.04);
+
+}
+
+
+/* ===========================
+   Better Button
+=========================== */
+
+.stButton>button{
+
+border-radius:12px;
+
+transition:.25s;
+
+font-weight:600;
+
+}
+
+.stButton>button:hover{
+
+transform:scale(1.03);
+
+}
+
+
+/* =========================================================
+   CINEMATCH SEARCH HISTORY
+========================================================= */
+
+.search-history-title {
+
+    font-size: 22px;
+
+    font-weight: 700;
+
+    color: white;
+
+    margin-top: 25px;
+
+    margin-bottom: 12px;
+
+}
+
+
+/* Search history buttons */
+
+div[data-testid="stButton"] button {
+
+    transition: all .2s ease;
+
+}
+
+
+/* History item buttons */
+
+div[data-testid="stButton"] button[kind="secondary"] {
+
+    border-radius: 10px;
+
+}
+
+
+/* History section spacing */
+
+.search-history-title + div {
+
+    margin-top: 5px;
+
+}
+
+
+
+
+/* ==========================================================
+   CineMatch AI — RESPONSIVE UI UPDATE
+   Desktop | Laptop | Tablet | Mobile | Large Screens
+   ========================================================== */
+
+/* Prevent accidental horizontal overflow */
+.stApp {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+*, 
+*::before, 
+*::after {
+    box-sizing: border-box;
+}
+
+/* Main content: flexible spacing for different screens */
+section[data-testid="stMain"] .block-container {
+    width: 100%;
+    max-width: 1680px;
+    margin-inline: auto;
+    padding-left: clamp(12px, 2.5vw, 36px);
+    padding-right: clamp(12px, 2.5vw, 36px);
+}
+
+/* Images should fit their available containers */
+[data-testid="stImage"],
+.stImage {
+    max-width: 100%;
+    min-width: 0;
+}
+
+[data-testid="stImage"] img,
+.stImage img {
+    max-width: 100%;
+}
+
+/* Keep buttons usable when labels are long */
+.stButton > button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stLinkButton"] a {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Keep columns from forcing horizontal overflow */
+[data-testid="stHorizontalBlock"] {
+    gap: clamp(8px, 1.5vw, 20px);
+}
+
+[data-testid="column"] {
+    min-width: 0;
+}
+
+/* Responsive headings and long text */
+section[data-testid="stMain"] h1 {
+    font-size: clamp(1.9rem, 3.4vw, 3.5rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+section[data-testid="stMain"] h2 {
+    font-size: clamp(1.4rem, 2.4vw, 2.3rem);
+    line-height: 1.25;
+}
+
+section[data-testid="stMain"] p {
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================================
+   TABLET — widths up to 900px
+   ========================================================== */
+
+@media screen and (max-width: 900px) {
+    section[data-testid="stMain"] .block-container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+
+    [data-testid="column"] {
+        flex: 1 1 260px !important;
+        width: auto !important;
+        min-width: min(100%, 260px) !important;
+    }
+
+    .hero {
+        padding: clamp(20px, 5vw, 36px);
+        margin-bottom: 24px;
+        border-radius: 20px;
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 6vw, 3.2rem);
+    }
+
+    .hero h3 {
+        font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+    }
+
+    .hero p {
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+    }
+
+    .navbar {
+        padding: 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .menu {
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+}
+
+/* ==========================================================
+   MOBILE — widths up to 600px
+   ========================================================== */
+
+@media screen and (max-width: 600px) {
+    section[data-testid="stMain"] .block-container {
+        padding: 12px 10px;
+    }
+
+    section[data-testid="stMain"] h1 {
+        font-size: clamp(1.7rem, 7vw, 2.2rem);
+    }
+
+    section[data-testid="stMain"] h2 {
+        font-size: clamp(1.3rem, 5.5vw, 1.7rem);
+    }
+
+    /* Stack Streamlit columns vertically */
+    [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        gap: 12px !important;
+    }
+
+    [data-testid="column"] {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Make controls easy to tap */
+    .stButton > button,
+    [data-testid="stDownloadButton"] button,
+    [data-testid="stLinkButton"] a {
+        min-height: 44px;
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+
+    /* Compact hero section */
+    .hero {
+        padding: 20px 14px;
+        margin-bottom: 20px;
+        border-radius: 16px;
+    }
+
+    .hero h1 {
+        font-size: clamp(1.8rem, 8vw, 2.4rem);
+    }
+
+    .hero h3 {
+        font-size: 1.25rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    /* Navbar wraps without pushing content sideways */
+    .navbar {
+        padding: 14px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+    }
+
+    .logo {
+        font-size: 23px;
+        overflow-wrap: anywhere;
+    }
+
+    .menu {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .menu span {
+        font-size: 14px;
+    }
+
+    /* Remove hover zoom effects on touch-size screens */
+    .stButton > button:hover,
+    .stImage img:hover {
+        transform: none;
+    }
+
+    .footer {
+        margin-top: 28px;
+        padding: 0 8px;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+}
+
+/* ==========================================================
+   LARGE DESKTOP / TV-SIZE VIEWPORTS
+   ========================================================== */
+
+@media screen and (min-width: 1600px) {
+    section[data-testid="stMain"] .block-container {
+        max-width: 1800px;
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    section[data-testid="stMain"] p {
+        font-size: 1.05rem;
+        line-height: 1.65;
+    }
+
+    .stButton > button {
+        min-height: 48px;
+    }
+}

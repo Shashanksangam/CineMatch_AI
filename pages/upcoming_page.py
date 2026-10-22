@@ -2,59 +2,117 @@ import streamlit as st
 
 from services.movie_api import get_upcoming
 
-from services.tmdb_service import (
-    get_movie_details,
-    get_trailer,
-    get_cast
-)
-
 from components.movie_card import movie_card
 from components.movie_details import movie_details
 
-from utils.movie_builder import build_movie
+from utils.lightweight_builder import build_light_movie
+
+from utils.session_state import initialize_movie_detail_state
 
 
 def upcoming_page():
 
+    # ======================================================
+    # INITIALIZE DETAILS STATE
+    # ======================================================
+
+    initialize_movie_detail_state()
+
+    # ======================================================
+    # PAGE IDENTIFICATION
+    # ======================================================
+
+    current_page = "Upcoming"
+
+    if st.session_state.get("active_content_page") != current_page:
+
+        st.session_state.selected_movie_details = None
+        st.session_state.selected_cast = []
+        st.session_state.details_page = None
+
+        st.session_state.active_content_page = current_page
+
+    # ======================================================
+    # TITLE
+    # ======================================================
+
     st.title("🎥 Upcoming Movies")
+
+    # ======================================================
+    # PAGE STATE
+    # ======================================================
 
     if "upcoming_page" not in st.session_state:
         st.session_state.upcoming_page = 1
 
+    if "upcoming_limit" not in st.session_state:
+        st.session_state.upcoming_limit = 10
+
     page = st.session_state.upcoming_page
+
+    # ======================================================
+    # FETCH DATA
+    # ======================================================
 
     data = get_upcoming(page)
 
-    
-
-    movies = data.get("results", [])
-
-    if not movies:
-
-        st.warning("Unable to fetch upcoming movies.")
-
+    if not data:
+        st.warning("Unable to fetch Upcoming movies.")
         return
 
-    cols = st.columns(5)
+    results = data.get("results", [])
 
-    for i, movie in enumerate(movies):
+    if not results:
+        st.warning("No Upcoming movies found.")
+        return
 
-        details = build_movie(movie)
+    # ======================================================
+    # CURRENT MOVIES
+    # ======================================================
 
-    if details:
+    movies = results[:st.session_state.upcoming_limit]
 
-        with cols[i % 5]:
+    # ======================================================
+    # MOVIE GRID
+    # ======================================================
 
-            movie_card(details)
+    for row in range(0, len(movies), 5):
 
-        if st.session_state.selected_movie_details:
+        cols = st.columns(5)
 
-            st.divider()
+        row_movies = movies[row:row + 5]
 
-            movie_details(
-                st.session_state.selected_movie_details,
-                st.session_state.selected_cast
-            )
+        for col, movie in zip(cols, row_movies):
+
+            details = build_light_movie(movie)
+
+            if details:
+
+                with col:
+
+                    movie_card(details)
+
+    # ======================================================
+    # MOVIE DETAILS
+    # IMPORTANT:
+    # This MUST remain OUTSIDE the movie loop.
+    # ======================================================
+
+    if (
+        st.session_state.get("selected_movie_details")
+        and st.session_state.get("details_page") == current_page
+    ):
+
+        st.divider()
+
+        movie_details(
+            st.session_state.selected_movie_details,
+            st.session_state.selected_cast
+        )
+
+    # ======================================================
+    # PAGINATION
+    # ======================================================
 
     st.divider()
 
@@ -62,11 +120,43 @@ def upcoming_page():
 
     with c2:
 
-        if st.button(
-            "Load Next 20 Movies",
-            key="upcoming_next_page",
-            use_container_width=True
-        ):
+        # --------------------------------------------------
+        # LOAD MORE
+        # --------------------------------------------------
 
-            st.session_state.upcoming_page += 1
-            st.rerun()
+        if st.session_state.upcoming_limit < len(results):
+
+            if st.button(
+                "⬇ Load More",
+                use_container_width=True,
+                key="upcoming_load_more"
+            ):
+
+                st.session_state.upcoming_limit = min(
+                    st.session_state.upcoming_limit + 10,
+                    len(results)
+                )
+
+                st.rerun()
+
+        # --------------------------------------------------
+        # NEXT PAGE
+        # --------------------------------------------------
+
+        else:
+
+            if st.button(
+                "➡ Next Page",
+                use_container_width=True,
+                key="upcoming_next_page"
+            ):
+
+                # Close currently opened details
+                st.session_state.selected_movie_details = None
+                st.session_state.selected_cast = []
+                st.session_state.details_page = None
+
+                st.session_state.upcoming_page += 1
+                st.session_state.upcoming_limit = 10
+
+                st.rerun()
